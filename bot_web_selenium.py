@@ -1,59 +1,80 @@
-#importa as bibliotecas
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.select import Select
-import time
+#importando as bibliotecas
+from selenium import webdriver                      #biblioteca para controlar o navegador
+from selenium.webdriver.common.by import By         #algumas funcionalidades da biblioteca
+from selenium.webdriver.common.keys import Keys     #algumas funcionalidades da biblioteca
+import time                                         #biblioteca de tempo
 
-def informacoes():
+#define todas as variáveis globais que serão usadas a frente
+#oferece a escolha de um atalho por categorias
+#pega informações do usuário sobre o produto buscado
+#e sobre a ordem que os produtos vão aparecer
+def pegar_informacoes():
     global categoria
     global pesquisa
     global ordem
-    categoria = int(input("Escolha uma categoria:\n\nIPhone(1)\nCelular(2)\nGeladeira(3)\nNotebook(4)\nTV(5)\nOu digite (0) para pesquisar: "))
+    categoria = int(input("Escolha uma categoria:\nIPhone(1)\nCelular(2)\nGeladeira(3)\nNotebook(4)\nTV(5)\nOu digite (0) para pesquisar: "))
     if categoria == 0:
-        pesquisa = input("")
+        pesquisa = input("Pesquisar:\n")
     ordem = int(input("\n\nOrdenar o produto por:\nMais relevante(1)\nMenor preço(2)\nMaior preço(3)\n"))
-    match ordem:
-        case 1:
-            ordem = 1
-        case 2:
-            ordem = "price_asc"
-        case 3:
-            ordem = "price_desc"
-    print("\033[0;32mCOLETANDO INFORMAÇÕES...")
 
-#atribui o  webdrive a variável driver e maximiza a janela
+#declara a variável driver global
+#atribui o webdriver a variável driver
+#maximiza a janela
 #navega até a página da URL
-#aguarda 1 segundo para o proximo comando
 def abrir_site():
+    print("\n\033[1;33mABRINDO O SITE...")
     global driver
     driver = webdriver.Chrome()
     driver.maximize_window()
     driver.get("https://www.zoom.com.br/")
-    print("\033[0;32mABRINDO O SITE...")
-    time.sleep(1)
+    print("\033[0;32mSITE ABERTO.")
 
-#identifica a barra de busca na URL e escreve "RX 6600" no campo de pesquisa
-#identifica o botão pesquisar e simula o click
-def pesquisa_produto():
+#condiciona para caso o usuário escolha digitar a pesquisa ou caso escolha uma das categorias
+#caso o usuário escolha dgitar, a função identifica a barra de busca do site
+# e escreve a pesquisa do usuário e identifica o botão pesquisar e simula o click
+#caso o usuário escolha uma categoria, a função vai chamar outra
+def pesquisar_produto():
     if categoria == 0:
+        print("\033[1;33mPESQUISANDO O PRODUTO...")
         search_box = driver.find_element(By.XPATH, "/html/body/div[1]/header/div[1]/div/div/div[3]/div/div/div[1]/input").send_keys(pesquisa)
         time.sleep(1)
         search_button = driver.find_element(By.XPATH, "/html/body/div[1]/header/div[1]/div/div/div[3]/div/div/div[1]/button").click()
-        time.sleep(1)
-        print("\033[0;32mPESQUISANDO O PRODUTO...")
+        time.sleep(3)
+        print("\033[0;32mPRODUTO PESQUISADO.")
     else:
+        print("\033[1;33mESCOLHENDO A CATEGORIA...")
         escolher_categoria()
-        print("\033[0;32mESCOLHENDO A CATEGORIA...")
 
-#filtra o produto
-#"menor preço"
-def filtrar_produto(): #!!!dando problema
-    if ordem != 1:
-        drop_down = Select(driver.find_element(By.XPATH, "/html/body/div[1]/div[3]/div/div[2]/div[1]/div/div/div/div[2]/select"))
-        drop_down.select_by_value(ordem)
-    print("\033[0;32mFILTRANDO O PRODUTO...")
-
+#identifica a categoria que o usuário escolheu
+#e simula um click em cima da categoria
 def escolher_categoria():
+    select_cat = driver.find_element(By.XPATH, f"/html/body/div[1]/div[1]/div[4]/div/nav/div/a[{categoria}]/span").click()
+    print("\033[0;32mCATEGORIA ESCOLHIDA.")
+
+#filtra os produtos pela ordem que o usuário escolheu
+#usando uma função da biblioteca de simulação de teclas do teclado
+def filtrar_produto():
+    print("\033[1;33mFILTRANDO O PRODUTO...")
+    ordenar = driver.find_element(By.ID, "orderBy").click()
+    time.sleep(1)
+    if ordem == 2:
+        seta = driver.find_element(By.ID, "orderBy").send_keys(Keys.DOWN)
+        time.sleep(1)
+    elif ordem == 3:
+        seta = driver.find_element(By.ID, "orderBy").send_keys(Keys.DOWN)
+        seta = driver.find_element(By.ID, "orderBy").send_keys(Keys.DOWN)
+        time.sleep(1)
+    enter = driver.find_element(By.ID, "orderBy").send_keys(Keys.ENTER)
+    print("\033[0;32mPRODUTO FILTRADO.")
+
+#chamando cada função na ordem
+pegar_informacoes()
+abrir_site()
+pesquisar_produto()
+filtrar_produto()
+
+#outra opção da função de escolher a categoria
+def escolher_categoria2():
     match categoria:
         case 1:
             select_cat = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div[4]/div/nav/div/a[1]/span").click() #iphone
@@ -65,8 +86,14 @@ def escolher_categoria():
             select_cat = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div[4]/div/nav/div/a[4]/span").click() #notebook
         case 5:
             select_cat = driver.find_element(By.XPATH, "/html/body/div[1]/div[1]/div[4]/div/nav/div/a[5]/span").click() #tv
+    print("\033[0;32mCATEGORIA ESCOLHIDA.")
 
-informacoes()
-abrir_site()
-pesquisa_produto()
-filtrar_produto()
+#outra opção da função de filtrar o produto
+#é menor, porém quebra mais fácil
+def filtrar_produto2():
+    print("FILTRANDO O PRODUTO...")
+    if ordem == 2:
+        ordenar_menor = driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/div[2]/div[1]/div/div/div/div[2]/select/option[2]").click()
+    elif ordem == 3:
+        ordenar_maior = driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/div[2]/div[1]/div/div/div/div[2]/select/option[3]").click()
+    print("\033[0;32mPRODUTO FILTRADO.")
